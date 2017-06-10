@@ -1,5 +1,7 @@
 package de.syslord.crudeftpserver.virtualfilesystem;
 
+import java.time.LocalDateTime;
+
 import org.apache.ftpserver.ftplet.FileSystemView;
 import org.apache.ftpserver.ftplet.FtpException;
 import org.apache.ftpserver.ftplet.FtpFile;
@@ -25,7 +27,7 @@ public class VirtualFileSystemView implements FileSystemView {
 	}
 
 	public void onFileUploadDone(VirtualFtpFile file) {
-		SimpleFile simpleFile = new SimpleFile(file.getName(), file.getData(), user.getName());
+		SimpleFile simpleFile = new SimpleFile(file.getName(), file.getData(), user.getName(), LocalDateTime.now());
 		fileUploadListener.onFileUploadDone(simpleFile);
 	}
 
@@ -41,6 +43,10 @@ public class VirtualFileSystemView implements FileSystemView {
 
 	@Override
 	public boolean changeWorkingDirectory(String dir) throws FtpException {
+		// Clients seem to expect this to be working for . .. and /
+		if (".".equals(dir) || "/".equals(dir) || "./".equals(dir) || "..".equals(dir)) {
+			return true;
+		}
 		return false;
 	}
 
@@ -51,7 +57,7 @@ public class VirtualFileSystemView implements FileSystemView {
 
 	@Override
 	public boolean isRandomAccessible() throws FtpException {
-		return true;
+		return false;
 	}
 
 	@Override

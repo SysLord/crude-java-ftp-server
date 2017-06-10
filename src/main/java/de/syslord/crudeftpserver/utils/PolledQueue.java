@@ -20,24 +20,31 @@ public class PolledQueue<T> {
 
 	private boolean started = false;
 
+	private long pollInterval;
+
 	/**
 	 *
 	 * @param listener gets called regularly for all items in the queue
 	 * @param maxCapacity when more than maxCapacity items are added during the poll interval the old ones are
 	 *            silently dropped
 	 */
-	public PolledQueue(Consumer<T> listener, int maxCapacity) {
+	public PolledQueue(Consumer<T> listener, int maxCapacity, long pollInterval) {
 		this.listener = listener;
 		this.maxCapacity = maxCapacity;
+		this.pollInterval = pollInterval;
 	}
 
 	public void start() {
 		if (started) {
-			throw new IllegalStateException("Polling wurde bereits gestartet.");
+			throw new IllegalStateException("polling already started");
 		}
 
 		started = true;
-		scheduler.scheduleWithFixedDelay(SafeRunnable.of(() -> poll()), 0, 10, TimeUnit.SECONDS);
+		scheduler.scheduleWithFixedDelay(SafeRunnable.of(() -> poll()), 0, pollInterval, TimeUnit.SECONDS);
+	}
+
+	public void stop() {
+		scheduler.shutdownNow();
 	}
 
 	private void poll() {

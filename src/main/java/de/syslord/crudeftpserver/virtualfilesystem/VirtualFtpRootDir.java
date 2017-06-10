@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.ftpserver.ftplet.FtpException;
 import org.apache.ftpserver.ftplet.FtpFile;
 
 public class VirtualFtpRootDir implements FtpFile {
@@ -27,28 +28,33 @@ public class VirtualFtpRootDir implements FtpFile {
 		return result != null;
 	}
 
-	public FtpFile getFile(String file) {
-		if ("./".equals(file)) {
+	public FtpFile getFile(String file) throws FtpException {
+		if (".".equals(file) || "./".equals(file) || "/".equals(file) || "..".equals(file)) {
 			return this;
+		}
+
+		// Handle absolute and relative paths
+		// FTP client may upload to "filename" but delete "/filename" for example
+		// files will only contain filenames without leading /
+		String fileName = file.matches("/[^/]+") ? file.substring(1) : file;
+
+		if (files.containsKey(fileName)) {
+			return files.get(fileName);
 		} else {
-			if (files.containsKey(file)) {
-				return files.get(file);
-			} else {
-				VirtualFtpFile fileFile = new VirtualFtpFile(virtualFileSystemView, this, file);
-				files.put(file, fileFile);
-				return fileFile;
-			}
+			VirtualFtpFile fileFile = new VirtualFtpFile(virtualFileSystemView, this, fileName);
+			files.put(fileName, fileFile);
+			return fileFile;
 		}
 	}
 
 	@Override
 	public String getAbsolutePath() {
-		return "./";
+		return "/";
 	}
 
 	@Override
 	public String getName() {
-		return "./";
+		return "/";
 	}
 
 	@Override

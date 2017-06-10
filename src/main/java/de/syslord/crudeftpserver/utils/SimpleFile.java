@@ -1,5 +1,7 @@
 package de.syslord.crudeftpserver.utils;
 
+import java.time.LocalDateTime;
+
 public class SimpleFile {
 
 	private String uploader;
@@ -8,10 +10,13 @@ public class SimpleFile {
 
 	private byte[] data;
 
-	public SimpleFile(String name, byte[] data, String uploader) {
+	private LocalDateTime uploaded;
+
+	public SimpleFile(String name, byte[] data, String uploader, LocalDateTime uploaded) {
 		this.name = name;
 		this.data = data;
 		this.uploader = uploader;
+		this.uploaded = uploaded;
 	}
 
 	public String getName() {
@@ -26,9 +31,13 @@ public class SimpleFile {
 		return uploader;
 	}
 
+	public LocalDateTime getUploaded() {
+		return uploaded;
+	}
+
 	@Override
 	public String toString() {
-		return "SimpleFile [uploader=" + uploader + ", name=" + name + "]";
+		return "SimpleFile [uploader=" + uploader + ", name=" + name + ", uploaded=" + uploaded + "]";
 	}
 
 }

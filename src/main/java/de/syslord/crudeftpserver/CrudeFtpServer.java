@@ -2,6 +2,8 @@ package de.syslord.crudeftpserver;
 
 import java.util.List;
 
+import org.apache.ftpserver.DataConnectionConfiguration;
+import org.apache.ftpserver.DataConnectionConfigurationFactory;
 import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
 import org.apache.ftpserver.ftplet.FtpException;
@@ -20,6 +22,14 @@ public class CrudeFtpServer {
 
 	private List<FtpServerUser> users;
 
+	private FtpServer server;
+
+	private String passivePortsString = null;
+
+	/**
+	 * The fileUploadListener runs in a FTP client thread, so the action should be short or be executed
+	 * asynchronously.
+	 */
 	public CrudeFtpServer(int port, FileUploadListener fileUploadedListener, List<FtpServerUser> users) {
 		this.port = port;
 		this.fileUploadedListener = fileUploadedListener;
@@ -31,6 +41,8 @@ public class CrudeFtpServer {
 
 		ListenerFactory factory = new ListenerFactory();
 		factory.setPort(port);
+		factory.setDataConnectionConfiguration(createDataConnectionConfig());
+
 		serverFactory.addListener("default", factory.createListener());
 
 		serverFactory.setUserManager(new DynamicUserManager(users));
@@ -39,8 +51,31 @@ public class CrudeFtpServer {
 		fileSystem.setFileUploadedListener(fileUploadedListener);
 		serverFactory.setFileSystem(fileSystem);
 
-		FtpServer server = serverFactory.createServer();
+		server = serverFactory.createServer();
 		server.start();
+	}
+
+	private DataConnectionConfiguration createDataConnectionConfig() {
+		DataConnectionConfigurationFactory dataConnectionConfigurationFactory = new DataConnectionConfigurationFactory();
+
+		if (passivePortsString != null && !passivePortsString.trim().isEmpty()) {
+			dataConnectionConfigurationFactory.setPassivePorts(passivePortsString);
+		}
+
+		return dataConnectionConfigurationFactory.createDataConnectionConfiguration();
+	}
+
+	public void stop() {
+		server.stop();
+	}
+
+	/**
+	 * See DataConnectionConfigurationFactory.setPassivePorts
+	 *
+	 * Defaults to any available port, which may be undesirable.
+	 */
+	public void setPassivePortsString(String passivePortsString) {
+		this.passivePortsString = passivePortsString;
 	}
 
 }
