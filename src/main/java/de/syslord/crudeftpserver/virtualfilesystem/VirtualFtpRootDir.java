@@ -29,14 +29,11 @@ public class VirtualFtpRootDir implements FtpFile {
 	}
 
 	public FtpFile getFile(String file) throws FtpException {
-		if (".".equals(file) || "./".equals(file) || "/".equals(file) || "..".equals(file)) {
+		if (isRootDir(file)) {
 			return this;
 		}
 
-		// Handle absolute and relative paths
-		// FTP client may upload to "filename" but delete "/filename" for example
-		// files will only contain filenames without leading /
-		String fileName = file.matches("/[^/]+") ? file.substring(1) : file;
+		String fileName = getFilename(file);
 
 		if (files.containsKey(fileName)) {
 			return files.get(fileName);
@@ -45,6 +42,50 @@ public class VirtualFtpRootDir implements FtpFile {
 			files.put(fileName, fileFile);
 			return fileFile;
 		}
+	}
+
+	private boolean isRootDir(String file) {
+		return ".".equals(file) || "./".equals(file) || "/".equals(file) || "..".equals(file);
+	}
+
+	private String getFilename(String file) {
+		// absolute or relative path
+
+		if (file.matches("^/[^/]+$")) {
+			return file.substring(1);
+
+		} else if (file.matches("^[.]/[^/]+$")) {
+			return file.substring(2);
+
+		} else {
+			return file;
+		}
+	}
+
+	private boolean isRootFile(String destPath) {
+		return destPath.matches("^/?[^/]+$");
+	}
+
+	public boolean moveFile(VirtualFtpFile sourceFile, FtpFile destination) {
+		String destPath = destination.getAbsolutePath();
+
+		if (!isRootFile(destPath)) {
+			return false;
+		}
+
+		String sourceName = sourceFile.getName();
+		String destName = getFilename(destPath);
+
+		sourceFile.updatePath(destName);
+
+		// remove emtpy destination file
+		files.remove(destName);
+		files.remove(sourceName);
+		files.put(destName, sourceFile);
+
+		virtualFileSystemView.onFileUploadDone(sourceFile);
+
+		return true;
 	}
 
 	@Override

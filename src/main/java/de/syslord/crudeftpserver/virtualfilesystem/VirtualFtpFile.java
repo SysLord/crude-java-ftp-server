@@ -20,10 +20,16 @@ public class VirtualFtpFile implements FtpFile {
 
 	private VirtualFileSystemView virtualFileSystemView;
 
+	private long lastModified;
+
 	public VirtualFtpFile(VirtualFileSystemView virtualFileSystemView, VirtualFtpRootDir rootFile, String name) {
 		this.virtualFileSystemView = virtualFileSystemView;
 		this.rootFile = rootFile;
 		this.name = name;
+	}
+
+	public void updatePath(String newName) {
+		this.name = newName;
 	}
 
 	public byte[] getData() {
@@ -92,12 +98,13 @@ public class VirtualFtpFile implements FtpFile {
 
 	@Override
 	public long getLastModified() {
-		return 0;
+		return lastModified;
 	}
 
 	@Override
-	public boolean setLastModified(long time) {
-		return false;
+	public boolean setLastModified(long lastModified) {
+		this.lastModified = lastModified;
+		return true;
 	}
 
 	@Override
@@ -122,7 +129,7 @@ public class VirtualFtpFile implements FtpFile {
 
 	@Override
 	public boolean move(FtpFile destination) {
-		return false;
+		return rootFile.moveFile(this, destination);
 	}
 
 	@Override
